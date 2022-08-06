@@ -8,4 +8,4 @@ def hex_to_base64(h: str) -> str:
 def XOR_combo(a: str, b: str) -> str:
     a_int = int(a, 16)
     b_int = int(b, 16)
-    return hex(a_int ^ b_int)
+    return hex(a_int ^ b_int)[2:]
