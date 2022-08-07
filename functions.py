@@ -9,3 +9,10 @@ def XOR_combo(a: str, b: str) -> str:
     a_int = int(a, 16)
     b_int = int(b, 16)
     return hex(a_int ^ b_int)[2:]
+
+def single_byte_XOR(a: str, character: str) -> str:
+    if len(character) != 1:
+        raise ValueError(f"character ('{character}') not a single byte")
+    
+    buffer = character * len(a)
+    return XOR_combo(a, buffer)
