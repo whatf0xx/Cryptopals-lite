@@ -20,10 +20,17 @@ def to_plaintext(b: List[str]) -> str:
     return "".join([bytes.fromhex("0" * (2-len(i[2:])) + i[2:]).decode() for i in b])
 
 def to_hex(b: List[str]) -> str:
-    return "".join(i[2:] for i in b)
+    return "".join("0" * (2-len(i[2:])) + i[2:] for i in b)
 
 def to_b64(b: List[str]) -> str:
     return base64.b64encode(bytes.fromhex(to_hex(b))).decode()
+
+def encode_output(buffer: List[str], encoding="hex"):
+
+    output_dict = {"b64": to_b64(buffer),
+                    "hex": to_hex(buffer)}
+    
+    return output_dict[encoding]
 
 def hex_XOR(s: str, t: str) -> str:
     """
@@ -41,17 +48,12 @@ def byte_XOR_encrypt(s: str, c: str, output_encoding="b64") -> str:
     string_buffer = to_bytes(s, 'plaintext')
     
     output_buffer = key_XOR(string_buffer, [c])
-
-    output_dict = {"b64": to_b64(output_buffer),
-                    "hex": to_hex(output_buffer)}
     
-    return output_dict[output_encoding]
+    return encode_output(output_buffer)
 
 def byte_XOR_decrypt(s: str, c: str, input_encoding="b64") -> str:
-    input_dict = {"b64" : to_bytes(s, "b64"),
-                    "hex" : to_bytes(s)}
     
-    cipher_buffer = input_dict[input_encoding]
+    cipher_buffer = to_bytes(s, input_encoding)
 
     output_buffer = key_XOR(cipher_buffer, [c])
 
@@ -94,6 +96,13 @@ def byte_XOR_break(s: str) -> Tuple[str, str, float]:
         
 
     return (best_key, best_guess, inf_ch_sq)
+
+def vig_encrypt(p: str, k: str, output_encoding='hex') -> str:
+    
+    plaintext_buffer = to_bytes(p, 'plaintext')
+    key_buffer = to_bytes(k, 'plaintext')
+
+    return encode_output(key_XOR(plaintext_buffer, key_buffer), output_encoding)
 
 if __name__ == "__main__":
     pass
