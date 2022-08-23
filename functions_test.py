@@ -18,3 +18,11 @@ def test_XOR():
     That's Task 2!
     """
 
+def test_sbXOR():
+    plaintext = "Cooking MC's like a pound of bacon"
+    key = "X"
+    assert byte_XOR_encrypt(plaintext, hex(ord(key)), output_encoding="hex") == "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    """
+    That just proves that the function works, it's not actually equivalent to breaking the cipher!
+    """
+
