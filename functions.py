@@ -1,7 +1,9 @@
 import base64
 import pickle
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from itertools import cycle
+from scipy.stats import chisquare
+from numpy import inf
 
 def to_bytes(s: str, encoding: str = "hex") -> List[str]:
     match encoding:
@@ -15,7 +17,7 @@ def to_bytes(s: str, encoding: str = "hex") -> List[str]:
             raise ValueError("Encoding not recognised.")
 
 def to_plaintext(b: List[str]) -> str:
-    return "".join([bytes.fromhex(i[2:]).decode() for i in b])
+    return "".join([bytes.fromhex("0" * (2-len(i[2:])) + i[2:]).decode() for i in b])
 
 def to_hex(b: List[str]) -> str:
     return "".join(i[2:] for i in b)
@@ -45,7 +47,7 @@ def byte_XOR_encrypt(s: str, c: str, output_encoding="b64") -> str:
     
     return output_dict[output_encoding]
 
-def byte_XOR_decrypt(s: str, c: str, input_encoding="b64"):
+def byte_XOR_decrypt(s: str, c: str, input_encoding="b64") -> str:
     input_dict = {"b64" : to_bytes(s, "b64"),
                     "hex" : to_bytes(s)}
     
@@ -55,24 +57,43 @@ def byte_XOR_decrypt(s: str, c: str, input_encoding="b64"):
 
     return to_plaintext(output_buffer)
 
-def get_frequencies(s: str, spaces=True):
-    alphabet = "abcdefgijklmnopqrstuvwxyz"
+def get_frequencies(s: str, spaces=True) -> Dict:
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
     if spaces:
         alphabet += " "
 
     frequency_dict =  {a:s.count(a) for a in alphabet}
+    if sum(frequency_dict.values()) == 0:
+        raise ValueError("No letters detected at all!")
+
     return {a:frequency_dict[a] / sum(frequency_dict.values()) for a in alphabet}  # normalisation
 
-def byte_XOR_break(s: str):
+def byte_XOR_break(s: str) -> Tuple[str, str, float]:
+    best_guess = None
+    best_key = None
+    inf_ch_sq = inf
     with open("frequency_dict_spaces.pkl", 'rb') as f:
-        frequency_dict_spaces = pickle.load(f)
+        true_freqs = pickle.load(f)
 
-    keys = [("0" * (2-len(hex(a)[2:])) + hex(a)[2:]).encode() for a in range(256)] # all possible byte keys
+    keys = [hex(a) for a in range(256)] # all possible byte keys
     for k in keys:
-        print(k)
-        guess_text = byte_XOR_decrypt(s, k)
+        try:
+            guess_text = byte_XOR_decrypt(s, k, input_encoding='hex')
+        except:
+            continue
+
+        try:
+            guess_freqs = get_frequencies(guess_text)
+            ch_sq = chisquare(list(guess_freqs.values()), list(true_freqs.values()))[0]
+        except:
+            ch_sq = inf
+        if ch_sq < inf_ch_sq:
+            best_guess = guess_text
+            best_key = k
+            inf_ch_sq = ch_sq
+        
+
+    return (best_key, best_guess, inf_ch_sq)
 
 if __name__ == "__main__":
-    buffer = to_bytes("Hello", "plaintext")
-    key = to_bytes("AB", "plaintext")
-    print(key_XOR(buffer, key))
+    pass
