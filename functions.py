@@ -2,34 +2,6 @@ import base64
 import pickle
 from typing import List, Tuple
 
-def hex_XOR(s: str, t: str) -> str:
-    """
-    Take 2 hex-encoded strings and return the value of their XOR. Assumes 's' is a text and 't' is key-like, so if len(t) < len(s) will repeat t until it pads the whole text. If len(t) > len(s), t is truncated. Both strings must be of even length and be hex-decodeable.
-    """
-    match (len(s) % 2, len(t) % 2):
-        case (1, 0):
-            raise "'s' is of odd length"
-
-        case (0, 1):
-            raise "'t' is of odd length"
-
-        case (1, 1):
-            raise "Both strings of odd length"
-        
-        case _:
-            pass
-
-    
-    if len(t) < len(s):
-        t *= (len(s) // len(t) + 1)
-    
-    if len(t) > len(s):
-        t = t[:len(s)]
-
-    result = hex(int(s, 16) ^ int(t, 16))[2:]
-    padding = len(s) - len(result)
-    return "0" * padding + result
-
 class types:
     def __init__(self) -> None:
         self.int = int
@@ -54,25 +26,7 @@ def key_to_hex(key, length: int) -> str:
         case _:
             raise "Couldn't recognise the key type."
 
-def byte_XOR_encrypt(s: str, c: str, output_encoding="base64") -> str:
-    """
-    Encrypts 's', a plaintext string, using the single byte key, 'c'. 'c' should be passed either as an ascii character, or as a bytes object of a single byte. 'output_encoding' can be 'base64' or 'hex', if the output message should be left as a hex-encoded string, as opposed to the standard behaviour of a base64-encoded string.
-    """
-    s_hex = base64.b16encode(s.encode()).decode()
-    c_hex = key_to_hex(c, len(s_hex) // 2)
-    
-    out_hex = hex_XOR(s_hex, c_hex)
-    print(out_hex + "\n")
 
-    match output_encoding:
-        case "base64":
-            return base64.b64encode(out_hex.encode()).decode()
-        case "hex":
-            return out_hex
-        case _:
-            raise Exception("Output encoding type not recognised.")
-
-def byte_XOR_decrypt(s: str, c: str, output_encoding="plaintext"):
     s_hex = base64.b64decode(s.encode()).decode()
     print(s_hex)
     c_hex = key_to_hex(c, len(s_hex) // 2)
@@ -127,22 +81,29 @@ def to_hex(b: List[str]) -> str:
 def to_b64(b: List[str]) -> str:
     return base64.b64encode(bytes.fromhex(to_hex(b))).decode()
 
-if __name__ == "__main__":
-    # plaintext = ""
-    # with open("test.txt", "r") as text:
-    #     for line in text:
-    #         for char in line:
-    #             plaintext += char
+def hex_XOR(s: str, t: str) -> str:
+    """
+    Take 2 hex-encoded bytes and return the hex-encoded byte corresponding to their logical XOR.
+    """
+    return hex(int(s, 16) ^ int(t, 16))
 
-    # ciphertext = byte_XOR_encrypt(plaintext, 'T')
+def byte_XOR_encrypt(s: str, c: str, output_encoding="base64") -> str:
+    """
+    Encrypts 's', a plaintext string, using the single byte key, 'c'. 'c' should be passed either as an ascii character, or as a bytes object of a single byte. 'output_encoding' can be 'base64' or 'hex', if the output message should be left as a hex-encoded string, as opposed to the standard behaviour of a base64-encoded string.
+    """
+    s_hex = base64.b16encode(s.encode()).decode()
+    c_hex = key_to_hex(c, len(s_hex) // 2)
     
-    # with open("enc-test.txt", 'w') as out:
-    #     out.write(ciphertext)
+    out_hex = hex_XOR(s_hex, c_hex)
+    print(out_hex + "\n")
 
-    # with open("dec-test.txt", 'w') as dec:
-    #     dec.write(byte_XOR_decrypt(ciphertext, "r"))
-    print(to_bytes("Hello", "plaintext"))
-    print(to_hex(to_bytes("Hello", "plaintext")))
-    print(to_plaintext(to_bytes("Hello", "plaintext")))
-    print(to_b64(to_bytes("Hello", "plaintext")))
+    match output_encoding:
+        case "base64":
+            return base64.b64encode(out_hex.encode()).decode()
+        case "hex":
+            return out_hex
+        case _:
+            raise Exception("Output encoding type not recognised.")
 
+def byte_XOR_decrypt(s: str, c: str, output_encoding="plaintext"):
+    pass
