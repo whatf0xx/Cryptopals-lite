@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple
 from itertools import cycle
 from scipy.stats import chisquare
 from numpy import inf
+from hexhamming import hamming_distance_string
 
 def to_bytes(s: str, encoding: str = "hex") -> List[str]:
     match encoding:
@@ -49,7 +50,7 @@ def byte_XOR_encrypt(s: str, c: str, output_encoding="b64") -> str:
     
     output_buffer = key_XOR(string_buffer, [c])
     
-    return encode_output(output_buffer)
+    return encode_output(output_buffer, output_encoding)
 
 def byte_XOR_decrypt(s: str, c: str, input_encoding="b64") -> str:
     
@@ -103,6 +104,15 @@ def vig_encrypt(p: str, k: str, output_encoding='hex') -> str:
     key_buffer = to_bytes(k, 'plaintext')
 
     return encode_output(key_XOR(plaintext_buffer, key_buffer), output_encoding)
+
+def vig_decrypt(c: str, k: str, input_encoding='b64') -> str:
+    cipher_buffer = to_bytes(c, input_encoding)
+    key_buffer = to_bytes(k, 'plaintext')
+
+    return to_plaintext(key_XOR(cipher_buffer, key_buffer))
+
+def crack_key_length(c: str, max_length=100) -> int:
+    pass
 
 if __name__ == "__main__":
     pass
