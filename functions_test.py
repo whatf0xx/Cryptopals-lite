@@ -26,3 +26,11 @@ def test_sbXOR():
     That just proves that the function works, it's not actually equivalent to breaking the cipher!
     """
 
+def test_sbXOR_dec():
+    ciphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    key = "X"
+    assert byte_XOR_decrypt(ciphertext, hex(ord(key)), input_encoding="hex") == "Cooking MC's like a pound of bacon"
+    """
+    This does what it should, could the functon be refactored in terms of the encryption function?
+    """
+

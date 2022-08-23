@@ -28,7 +28,7 @@ def to_bytes(s: str, encoding: str = "hex") -> List[str]:
     match encoding:
         case "hex":
             return [hex(i) for i in bytes.fromhex(s)]
-        case "64":
+        case "b64":
             return [hex(i) for i in base64.b64decode(s)]
         case "plaintext":
             return [hex(i) for i in s.encode()]
@@ -50,7 +50,7 @@ def hex_XOR(s: str, t: str) -> str:
     """
     return hex(int(s, 16) ^ int(t, 16))
 
-def byte_XOR_encrypt(s: str, c: str, output_encoding="base64") -> str:
+def byte_XOR_encrypt(s: str, c: str, output_encoding="b64") -> str:
     """
     Encrypts 's', a plaintext string, using the single byte key, 'c'. 'c' should be passed as a string-represented hexadecimal number between 0 and 255, inclusive, obviously.
     """
@@ -60,10 +60,18 @@ def byte_XOR_encrypt(s: str, c: str, output_encoding="base64") -> str:
     
     output_buffer = [hex_XOR(p, k) for p, k in zip(string_buffer, key_buffer)]
 
-    output_dict = {"base64": to_b64(output_buffer),
+    output_dict = {"b64": to_b64(output_buffer),
                     "hex": to_hex(output_buffer)}
     
     return output_dict[output_encoding]
 
 def byte_XOR_decrypt(s: str, c: str, input_encoding="b64"):
+    input_dict = {"b64" : to_bytes(s, "b64"),
+                    "hex" : to_bytes(s)}
     
+    cipher_buffer = input_dict[input_encoding]
+    key_buffer = [c] * len(cipher_buffer)
+
+    output_buffer = [hex_XOR(c, k) for c, k in zip(cipher_buffer, key_buffer)]
+
+    return to_plaintext(output_buffer)
