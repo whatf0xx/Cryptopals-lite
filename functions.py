@@ -1,5 +1,6 @@
 import base64
 import pickle
+from statistics import mean
 from typing import Dict, List, Tuple
 from itertools import cycle
 from scipy.stats import chisquare
@@ -111,8 +112,35 @@ def vig_decrypt(c: str, k: str, input_encoding='b64') -> str:
 
     return to_plaintext(key_XOR(cipher_buffer, key_buffer))
 
+def norm_hamming_dist(s: str, l: int) -> float:
+    """
+    Find the Hamming distance between successive groups of bytes, of length l, in the string, s, taken to be hex-encoded.
+    """
+    string_buffer = to_bytes(s)
+    repeats = len(string_buffer) // l - 1
+    distances = [0] * repeats
+    for i in range(repeats):
+        buffer1 = string_buffer[i*l:(i+1)*l]
+        buffer2 = string_buffer[(i+1)*l:(i+2)*l]
+
+        distances[i] = hamming_distance_string(to_hex(buffer1), to_hex(buffer2)) / l
+
+    return mean(distances)
+
 def crack_key_length(c: str, max_length=100) -> int:
     pass
 
 if __name__ == "__main__":
-    pass
+    string = """1D421F4D0B0F021F4F134E3C1A69651F491C0E4E13010B074E1B01164536001E01496420541D1D4333534E6552060047541C"""
+    with open('lotr.txt', 'r') as lotr:
+        lines_to_read = 1000
+        text = ""
+        for line in lotr:
+            lines_to_read -= 1
+            if lines_to_read < 0:
+                break
+            else:
+                for char in line:
+                    text += char
+
+    print(norm_hamming_dist(to_hex(to_bytes(text, 'plaintext')), 1))
