@@ -41,8 +41,14 @@ def eq_buffer_XOR(a: bytes, b: bytes) -> bytes:
     assert len(a) == len(b), "Byte buffers must be of equal length."
     return bytes([i^j for i, j in zip(a, b)])
 
-def pad_buffer(buffer: bytes, pad: bytes, length: int) -> bytes:
-    return pad * length + buffer
+def pad_buffer(buffer: bytes, pad: bytes, length: int, end='back') -> bytes:
+    match end:
+        case 'front':
+            return pad * length + buffer
+        case 'back':
+            return buffer + pad * length
+        case _:
+            raise ValueError("End must be 'front' or 'back'.")
 
 def hex_XOR(s: str, t: str) -> str:
     """
@@ -141,16 +147,4 @@ def crack_key_length(c: str, max_length=100) -> int:
     pass
 
 if __name__ == "__main__":
-    string = """1D421F4D0B0F021F4F134E3C1A69651F491C0E4E13010B074E1B01164536001E01496420541D1D4333534E6552060047541C"""
-    with open('lotr.txt', 'r') as lotr:
-        lines_to_read = 1000
-        text = ""
-        for line in lotr:
-            lines_to_read -= 1
-            if lines_to_read < 0:
-                break
-            else:
-                for char in line:
-                    text += char
-
-    print(norm_hamming_dist(to_hex(to_bytes(text, 'plaintext')), 1))
+    print(pad_buffer(b"YELLOW SUBMARINE", b'\x04', 4))
