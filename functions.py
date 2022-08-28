@@ -7,25 +7,25 @@ from scipy.stats import chisquare
 from numpy import inf
 from hexhamming import hamming_distance_string
 
-def to_bytes(s: str, encoding: str = "hex") -> List[str]:
+def to_bytes(s: str, encoding: str = "hex") -> bytes:
     match encoding:
         case "hex":
-            return [hex(i) for i in bytes.fromhex(s)]
+            return base64.b16decode(s, casefold=True)
         case "b64":
-            return [hex(i) for i in base64.b64decode(s)]
+            return base64.b64decode(s, casefold=True)
         case "plaintext":
-            return [hex(i) for i in s.encode()]
+            return s.encode()
         case _:
             raise ValueError("Encoding not recognised.")
 
-def to_plaintext(b: List[str]) -> str:
-    return "".join([bytes.fromhex("0" * (2-len(i[2:])) + i[2:]).decode() for i in b])
+def to_plaintext(b: bytes) -> str:
+    return b.decode()
 
-def to_hex(b: List[str]) -> str:
-    return "".join("0" * (2-len(i[2:])) + i[2:] for i in b)
+def to_hex(b: bytes) -> str:
+    return base64.b16encode(b).decode().lower()
 
-def to_b64(b: List[str]) -> str:
-    return base64.b64encode(bytes.fromhex(to_hex(b))).decode()
+def to_b64(b: bytes) -> str:
+    return base64.b64encode(b).decode()
 
 def encode_output(buffer: List[str], encoding="hex"):
 
@@ -34,22 +34,32 @@ def encode_output(buffer: List[str], encoding="hex"):
     
     return output_dict[encoding]
 
+def eq_buffer_XOR(a: bytes, b: bytes) -> bytes:
+    """
+    Take 2 equal length buffers and return their logical XOR.
+    """
+    assert len(a) == len(b), "Byte buffers must be of equal length."
+    return bytes([i^j for i, j in zip(a, b)])
+
+def pad_buffer(buffer: bytes, pad: bytes, length: int) -> bytes:
+    return pad * l + b
+
 def hex_XOR(s: str, t: str) -> str:
     """
     Take 2 hex-encoded bytes and return the hex-encoded byte corresponding to their logical XOR.
     """
     return hex(int(s, 16) ^ int(t, 16))
 
-def key_XOR(buffer: List[str], key: List[str]) -> List[str]:
-    return  [hex_XOR(p, k) for p, k in zip(buffer, cycle(key))]
+def key_XOR(buffer: bytes, key: bytes) -> bytes:
+    return  bytes([p ^ k for p, k in zip(buffer, cycle(key))])
 
-def byte_XOR_encrypt(s: str, c: str, output_encoding="b64") -> str:
+def byte_XOR_encrypt(s: str, c: bytes, output_encoding="b64") -> str:
     """
-    Encrypts 's', a plaintext string, using the single byte key, 'c'. 'c' should be passed as a string-represented hexadecimal number between 0 and 255, inclusive, obviously.
+    Encrypts 's', a plaintext string, using the single byte key, 'c'.
     """
     string_buffer = to_bytes(s, 'plaintext')
     
-    output_buffer = key_XOR(string_buffer, [c])
+    output_buffer = key_XOR(string_buffer, c)
     
     return encode_output(output_buffer, output_encoding)
 
@@ -57,7 +67,7 @@ def byte_XOR_decrypt(s: str, c: str, input_encoding="b64") -> str:
     
     cipher_buffer = to_bytes(s, input_encoding)
 
-    output_buffer = key_XOR(cipher_buffer, [c])
+    output_buffer = key_XOR(cipher_buffer, c)
 
     return to_plaintext(output_buffer)
 
