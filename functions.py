@@ -42,7 +42,7 @@ def eq_buffer_XOR(a: bytes, b: bytes) -> bytes:
     return bytes([i^j for i, j in zip(a, b)])
 
 def pad_buffer(buffer: bytes, pad: bytes, length: int) -> bytes:
-    return pad * l + b
+    return pad * length + buffer
 
 def hex_XOR(s: str, t: str) -> str:
     """
